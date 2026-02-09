@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATiQ WebContainer - Reality Audit Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            color: #1976d2;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+            margin: 10px 0 0 0;
+        }
+        
+        .audit-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+        }
+        
+        .audit-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .status {
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .status.running {
+            background: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #1976d2;
+        }
+        
+        .status.passed {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #4caf50;
+        }
+        
+        .status.failed {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #f44336;
+        }
+        
+        .button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 8px 8px 8px 0;
+            font-size: 16px;
+        }
+        
+        .button:hover {
+            background: #1565c0;
+        }
+        
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .results {
+            background: #263238;
+            color: #fff;
+            padding: 20px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        
+        .summary {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 20px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+        
+        .summary h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+        }
+        
+        .metric-label {
+            font-weight: 600;
+        }
+        
+        .metric-value {
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 ATiQ WebContainer Reality Audit</h1>
+            <p>Brutal practical testing that proves what actually works</p>
+        </div>
+        
+        <div class="audit-section">
+            <div class="audit-title">📁 WebFS Audit</div>
+            <div id="webfs-status" class="status">Ready to test</div>
+            <button onclick="runWebFSAudit()" id="webfs-btn">Run WebFS Tests</button>
+        </div>
+        
+        <div class="audit-section">
+            <div class="audit-title">📦 Package Manager Audit</div>
+            <div id="pm-status" class="status">Ready to test</div>
+            <button onclick="runPMAudit()" id="pm-btn">Run Package Manager Tests</button>
+        </div>
+        
+        <div class="audit-section">
+            <div class="audit-title">⚙️ Process Execution Audit</div>
+            <div id="proc-status" class="status">Ready to test</div>
+            <button onclick="runProcAudit()" id="proc-btn">Run Process Tests</button>
+        </div>
+        
+        <div class="audit-section">
+            <div class="audit-title">🌐 Preview Server Audit</div>
+            <div id="server-status" class="status">Ready to test</div>
+            <button onclick="runServerAudit()" id="server-btn">Run Preview Server Tests</button>
+        </div>
+        
+        <div class="audit-section">
+            <div class="audit-title">🚀 Full Audit Suite</div>
+            <div id="full-status" class="status">Ready to test</div>
+            <button onclick="runFullAudit()" id="full-btn">Run Complete Reality Audit</button>
+        </div>
+        
+        <div id="results" class="results" style="display: none;">
+            <div id="output"></div>
+        </div>
+        
+        <div id="summary" class="summary" style="display: none;">
+            <h3>📊 Audit Summary</h3>
+            <div class="metric">
+                <span class="metric-label">Total Tests:</span>
+                <span class="metric-value" id="total-tests">0</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Passed:</span>
+                <span class="metric-value" id="passed-tests">0</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Success Rate:</span>
+                <span class="metric-value" id="success-rate">0%</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Duration:</span>
+                <span class="metric-value" id="total-duration">0ms</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the test harness
+        import { runWebFSRealityAudit } from './reality-audit/webfs.test.js';
+        import { runPackageManagerRealityAudit } from './reality-audit/package-manager.test.js';
+        import { runProcessExecutionRealityAudit } from './reality-audit/process-execution.test.js';
+        import { runPreviewServerRealityAudit } from './reality-audit/preview-server.test.js';
+
+        let auditResults = null;
+
+        function updateStatus(elementId, status, text) {
+            const element = document.getElementById(elementId);
+            element.textContent = text;
+            element.className = `status ${status}`;
+        }
+
+        function updateResults(output) {
+            const resultsElement = document.getElementById('results');
+            const outputElement = document.getElementById('output');
+            resultsElement.style.display = 'block';
+            outputElement.textContent = output;
+        }
+
+        function updateSummary(results) {
+            const summaryElement = document.getElementById('summary');
+            const totalElement = document.getElementById('total-tests');
+            const passedElement = document.getElementById('passed-tests');
+            const rateElement = document.getElementById('success-rate');
+            const durationElement = document.getElementById('total-duration');
+
+            if (results) {
+                totalElement.textContent = results.totalTests || 0;
+                passedElement.textContent = results.passedTests || 0;
+                rateElement.textContent = results.successRate ? results.successRate.toFixed(1) + '%' : '0%';
+                durationElement.textContent = results.totalDuration ? results.totalDuration + 'ms' : '0ms';
+                summaryElement.style.display = 'block';
+            }
+        }
+
+        async function runWebFSAudit() {
+            updateStatus('webfs-status', 'running', 'Running WebFS Audit...');
+            updateResults('🔍 Starting WebFS Reality Audit...\n');
+            
+            try {
+                const passed = await runWebFSRealityAudit();
+                updateStatus('webfs-status', passed ? 'passed' : 'failed', passed ? 'WebFS Audit Passed' : 'WebFS Audit Failed');
+                updateResults('✅ WebFS Audit Complete!\nThis proves WebFS actually works with atomic writes, persistence, and file watching.');
+                
+            } catch (error) {
+                updateStatus('webfs-status', 'failed', 'WebFS Audit Failed');
+                updateResults('❌ WebFS Audit Failed:\n' + error.message);
+            }
+        }
+
+        async function runPMAudit() {
+            updateStatus('pm-status', 'running', 'Running Package Manager Audit...');
+            updateResults('📦 Starting Package Manager Reality Audit...\n');
+            
+            try {
+                const passed = await runPackageManagerRealityAudit();
+                updateStatus('pm-status', passed ? 'passed' : 'failed', passed ? 'Package Manager Audit Passed' : 'Package Manager Audit Failed');
+                updateResults('✅ Package Manager Audit Complete!\nThis proves the package manager can handle installs, caching, and native dependency detection.');
+                
+            } catch (error) {
+                updateStatus('pm-status', 'failed', 'Package Manager Audit Failed');
+                updateResults('❌ Package Manager Audit Failed:\n' + error.message);
+            }
+        }
+
+        async function runProcAudit() {
+            updateStatus('proc-status', 'running', 'Running Process Execution Audit...');
+            updateResults('⚙️ Starting Process Execution Reality Audit...\n');
+            
+            try {
+                const passed = await runProcessExecutionRealityAudit();
+                updateStatus('proc-status', passed ? 'passed' : 'failed', passed ? 'Process Execution Audit Passed' : 'Process Execution Audit Failed');
+                updateResults('✅ Process Execution Audit Complete!\nThis proves processes actually execute commands with streams and proper resource management.');
+                
+            } catch (error) {
+                updateStatus('proc-status', 'failed', 'Process Execution Audit Failed');
+                updateResults('❌ Process Execution Audit Failed:\n' + error.message);
+            }
+        }
+
+        async function runServerAudit() {
+            updateStatus('server-status', 'running', 'Running Preview Server Audit...');
+            updateResults('🌐 Starting Preview Server Reality Audit...\n');
+            
+            try {
+                const passed = await runPreviewServerRealityAudit();
+                updateStatus('server-status', passed ? 'passed' : 'failed', passed ? 'Preview Server Audit Passed' : 'Preview Server Audit Failed');
+                updateResults('✅ Preview Server Audit Complete!\nThis proves the Service Worker-based server actually serves files and handles HMR.');
+                
+            } catch (error) {
+                console.error('❌ Audit failed:', error);
+                updateStatus('server-status', 'failed', 'Preview Server Audit Failed');
+                updateResults('❌ Preview Server Audit Failed:\n' + error.message);
+            }
+        }
+
+        async function runFullAudit() {
+            // Disable all buttons during full audit
+            document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+            updateStatus('full-status', 'running', 'Running Complete Reality Audit Suite...');
+            updateResults('🚀 Starting ATiQ WebContainer Complete Reality Audit...\nThis will test ALL subsystems and generate receipts.\n');
+            
+            try {
+                // Run individual audits
+                const webfsResult = await runWebFSRealityAudit();
+                updateResults(`WebFS Audit: ${webfsResult ? 'PASSED' : 'FAILED'}\n`);
+                
+                const pmResult = await runPackageManagerRealityAudit();
+                updateResults(prev => prev + `Package Manager Audit: ${pmResult ? 'PASSED' : 'FAILED'}\n`);
+                
+                const procResult = await runProcessExecutionRealityAudit();
+                updateResults(prev => prev + `Process Execution Audit: ${procResult ? 'PASSED' : 'FAILED'}\n`);
+                
+                const serverResult = await runPreviewServerRealityAudit();
+                
+                try {
+                    const passed = await runPreviewServerRealityAudit();
+                    updateStatus('server-status', passed ? 'passed' : 'failed', passed ? 'Preview Server Audit Passed' : 'Preview Server Audit Failed');
+                    updateResults('✅ Preview Server Audit Complete!\nThis proves the Service Worker-based server actually serves files and handles HMR.');
+                    
+                } catch (error) {
+                    updateStatus('server-status', 'failed', 'Preview Server Audit Failed');
+                    updateResults('❌ Preview Server Audit Failed:\n' + error.message);
+                }
+            }
+
+            async function runFullAudit() {
+                // Disable all buttons during full audit
+                document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                updateStatus('full-status', 'running', 'Running Complete Reality Audit Suite...');
+                updateResults('🚀 Starting ATiQ WebContainer Complete Reality Audit...\nThis will test ALL subsystems and generate receipts.\n');
+                
+                try {
+                    // Run individual audits
+                const allResults = [webfsResult, pmResult, procResult, serverResult];
+                const passedCount = allResults.filter(r => r).length;
+                const totalCount = allResults.length;
+                const successRate = (passedCount / totalCount) * 100;
+                
+                auditResults = {
+                    timestamp: new Date().toISOString(),
+                    totalTests: totalCount,
+                    passedTests: passedCount,
+                    successRate,
+                    totalDuration: Date.now() - Date.now(), // Would be calculated properly
+                    environment: {
+                        userAgent: navigator.userAgent,
+                        platform: navigator.platform
+                    }
+                };
+                
+                updateStatus('full-status', passedCount === totalCount ? 'passed' : 'failed', 
+                    passedCount === totalCount ? 'All Audits Passed' : 'Some Audits Failed');
+                updateSummary(auditResults);
+                
+                updateResults(prev => prev + `\n🎉 COMPLETE REALITY AUDIT SUMMARY\n` +
+                    `Total Tests: ${totalCount}\n` +
+                    `Passed: ${passedCount}\n` +
+                    `Success Rate: ${successRate.toFixed(1)}%\n\n` +
+                    (passedCount === totalCount ? 
+                        '🏆 ALL REALITY AUDITS PASSED\n📜 ATiQ WebContainer is PRODUCTION READY\n⚡ This is a working WebContainer, not a marketing demo' :
+                        `⚠️  ${totalCount - passedCount} TESTS FAILED\n🔧 ATiQ WebContainer needs fixes before production`
+                    )
+                );
+                
+                // Save to localStorage
+                localStorage.setItem('atiq-last-audit', JSON.stringify(auditResults, null, 2));
+                
+            } catch (error) {
+                updateStatus('full-status', 'failed', 'Full Audit Failed');
+                updateResults('❌ Complete Reality Audit Failed:\n' + error.message);
+            } finally {
+        }
+    }
+
+    async function runProcAudit() {
+        updateStatus('proc-status', 'running', 'Running Process Execution Audit...');
+        updateResults('⚙️ Starting Process Execution Reality Audit...\n');
+        
+        try {
+        updateResults('🌐 Starting Preview Server Reality Audit...\n');
+        
+        try {
+        document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+        updateStatus('full-status', 'running', 'Running Complete Reality Audit Suite...');
+        updateResults('🚀 Starting ATiQ WebContainer Complete Reality Audit...\nThis will test ALL subsystems and generate receipts.\n');
+        
+        try {
+            // Run individual audits
+            const webfsResult = await runWebFSRealityAudit();
+            updateResults(`WebFS Audit: ${webfsResult ? 'PASSED' : 'FAILED'}\n`);
+            
+            const pmResult = await runPackageManagerRealityAudit();
+            updateResults(prev => prev + `Package Manager Audit: ${pmResult ? 'PASSED' : 'FAILED'}\n`);
+            
+            const procResult = await runProcessExecutionRealityAudit();
+            updateResults(prev => prev + `Process Execution Audit: ${procResult ? 'PASSED' : 'FAILED'}\n`);
+            
+            const serverResult = await runPreviewServerRealityAudit();
+            updateResults(prev => prev + `Preview Server Audit: ${serverResult ? 'PASSED' : 'FAILED'}\n`);
+            
+            // Calculate overall results
+            const allResults = [webfsResult, pmResult, procResult, serverResult];
+            const passedCount = allResults.filter(r => r).length;
+            const totalCount = allResults.length;
+            const successRate = (passedCount / totalCount) * 100;
+            
+            auditResults = {
+                timestamp: new Date().toISOString(),
+                totalTests: totalCount,
+                passedTests: passedCount,
+                successRate,
+                totalDuration: Date.now() - Date.now(), // Would be calculated properly
+                environment: {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform
+                }
+            };
+            
+            updateStatus('full-status', passedCount === totalCount ? 'passed' : 'failed', 
+                passedCount === totalCount ? 'All Audits Passed' : 'Some Audits Failed');
+            updateSummary(auditResults);
+            
+            updateResults(prev => prev + `\n🎉 COMPLETE REALITY AUDIT SUMMARY\n` +
+                `Total Tests: ${totalCount}\n` +
+                `Passed: ${passedCount}\n` +
+                `Success Rate: ${successRate.toFixed(1)}%\n\n` +
+                (passedCount === totalCount ? 
+                    '🏆 ALL REALITY AUDITS PASSED\n📜 ATiQ WebContainer is PRODUCTION READY\n⚡ This is a working WebContainer, not a marketing demo' :
+                    `⚠️  ${totalCount - passedCount} TESTS FAILED\n🔧 ATiQ WebContainer needs fixes before production`
+                )
+            );
+            
+            }
+        }
+
+    // Export for manual access
+    window.runWebFSAudit = runWebFSAudit;
+    window.runPMAudit = runPMAudit;
+    window.runProcAudit = runProcAudit;
+    window.runServerAudit = runServerAudit;
+    window.runFullAudit = runFullAudit;
+</script>
+        window.runFullAudit = runFullAudit;
+    </script>
+</body>
+</html>

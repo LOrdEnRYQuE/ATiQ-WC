@@ -1,0 +1,74 @@
+name: ATiQ WebContainer Reality Audit
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  audit:
+    name: WebContainer Reality Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install Dependencies
+        run: |
+          npm ci
+          npx playwright install chromium
+          
+      - name: Run Reality Audit
+        run: |
+          echo "🚀 Starting ATiQ WebContainer Reality Audit..."
+          echo "Browser: $(node -e 'console.log(navigator.userAgent)')"
+          npm run audit:ci
+          
+      - name: Upload Audit Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atiq-webcontainer-audit
+          path: artifacts/
+          retention-days: 30
+          
+      - name: Comment PR Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'artifacts/audit-summary.json';
+            
+            if (fs.existsSync(path)) {
+              const summary = JSON.parse(fs.readFileSync(path, 'utf8'));
+              const status = summary.status === 'pass' ? '✅ PASSED' : '❌ FAILED';
+              const message = `
+              ## ATiQ WebContainer Reality Audit Results
+              
+              **Status**: ${status}
+              **Browser**: ${summary.browser}
+              **Tests Passed**: ${summary.passedTests}/${summary.totalTests}
+              **Duration**: ${summary.totalDuration}ms
+              
+              ${summary.results.map(r => `- ${r.suite}: ${r.status === 'pass' ? '✅' : '❌'} (${r.duration}ms)`).join('\n')}
+              `;
+              
+              github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: message
+              });
+            }

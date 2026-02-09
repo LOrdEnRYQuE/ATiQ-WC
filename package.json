@@ -1,0 +1,69 @@
+{
+  "name": "@atiq/webcontainer",
+  "version": "1.0.0",
+  "description": "ATiQ WebContainer - Better than StackBlitz by being honest about what 'better' means",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "audit": "node ./dist/tests/runner.node.js",
+    "audit:browser": "playwright test --config=playwright.audit.config.ts",
+    "audit:ci": "playwright test --config=playwright.audit.config.ts --reporter=line",
+    "test": "jest",
+    "build": "tsc && rollup -c",
+    "dev": "tsc --watch",
+    "preview": "node ./dist/tests/runner.node.js",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "webcontainer",
+    "sandbox",
+    "browser",
+    "development",
+    "runtime",
+    "atiq"
+  ],
+  "author": "ATiQ Team",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "rollup": "^4.0.0",
+    "@rollup/plugin-typescript": "^11.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "esbuild-wasm": "^0.19.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./browser": {
+      "import": "./dist/browser.esm.js",
+      "require": "./dist/browser.js",
+      "types": "./dist/browser.d.ts"
+    }
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/atiq/webcontainer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/atiq/webcontainer/issues"
+  },
+  "homepage": "https://github.com/atiq/webcontainer#readme"
+}
