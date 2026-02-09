@@ -171,7 +171,7 @@
         <div class="audit-section">
             <div class="audit-title">🚀 Full Audit Suite</div>
             <div id="full-status" class="status">Ready to test</div>
-            <button onclick="runFullAudit()" id="full-btn">Run Complete Reality Audit</button>
+            <button onclick="runFullAudit()" id="full-btn" data-testid="run-audit">Run Complete Reality Audit</button>
         </div>
         
         <div id="results" class="results" style="display: none;">
@@ -198,6 +198,8 @@
             </div>
         </div>
     </div>
+
+    <script type="module" src="audit-bridge.js"></script>
 
     <script type="module">
         // Import the test harness
@@ -329,13 +331,6 @@
             }
 
             async function runFullAudit() {
-                // Disable all buttons during full audit
-                document.querySelectorAll('button').forEach(btn => btn.disabled = true);
-                updateStatus('full-status', 'running', 'Running Complete Reality Audit Suite...');
-                updateResults('🚀 Starting ATiQ WebContainer Complete Reality Audit...\nThis will test ALL subsystems and generate receipts.\n');
-                
-                try {
-                    // Run individual audits
                 const allResults = [webfsResult, pmResult, procResult, serverResult];
                 const passedCount = allResults.filter(r => r).length;
                 const totalCount = allResults.length;
@@ -384,67 +379,46 @@
         try {
         updateResults('🌐 Starting Preview Server Reality Audit...\n');
         
-        try {
-        document.querySelectorAll('button').forEach(btn => btn.disabled = true);
-        updateStatus('full-status', 'running', 'Running Complete Reality Audit Suite...');
-        updateResults('🚀 Starting ATiQ WebContainer Complete Reality Audit...\nThis will test ALL subsystems and generate receipts.\n');
-        
-        try {
-            // Run individual audits
-            const webfsResult = await runWebFSRealityAudit();
-            updateResults(`WebFS Audit: ${webfsResult ? 'PASSED' : 'FAILED'}\n`);
-            
-            const pmResult = await runPackageManagerRealityAudit();
-            updateResults(prev => prev + `Package Manager Audit: ${pmResult ? 'PASSED' : 'FAILED'}\n`);
-            
-            const procResult = await runProcessExecutionRealityAudit();
-            updateResults(prev => prev + `Process Execution Audit: ${procResult ? 'PASSED' : 'FAILED'}\n`);
-            
-            const serverResult = await runPreviewServerRealityAudit();
-            updateResults(prev => prev + `Preview Server Audit: ${serverResult ? 'PASSED' : 'FAILED'}\n`);
-            
-            // Calculate overall results
-            const allResults = [webfsResult, pmResult, procResult, serverResult];
-            const passedCount = allResults.filter(r => r).length;
-            const totalCount = allResults.length;
-            const successRate = (passedCount / totalCount) * 100;
-            
-            auditResults = {
-                timestamp: new Date().toISOString(),
-                totalTests: totalCount,
-                passedTests: passedCount,
-                successRate,
-                totalDuration: Date.now() - Date.now(), // Would be calculated properly
-                environment: {
-                    userAgent: navigator.userAgent,
-                    platform: navigator.platform
-                }
-            };
-            
-            updateStatus('full-status', passedCount === totalCount ? 'passed' : 'failed', 
-                passedCount === totalCount ? 'All Audits Passed' : 'Some Audits Failed');
-            updateSummary(auditResults);
-            
-            updateResults(prev => prev + `\n🎉 COMPLETE REALITY AUDIT SUMMARY\n` +
-                `Total Tests: ${totalCount}\n` +
-                `Passed: ${passedCount}\n` +
-                `Success Rate: ${successRate.toFixed(1)}%\n\n` +
-                (passedCount === totalCount ? 
-                    '🏆 ALL REALITY AUDITS PASSED\n📜 ATiQ WebContainer is PRODUCTION READY\n⚡ This is a working WebContainer, not a marketing demo' :
-                    `⚠️  ${totalCount - passedCount} TESTS FAILED\n🔧 ATiQ WebContainer needs fixes before production`
-                )
-            );
-            
             }
         }
 
-    // Export for manual access
-    window.runWebFSAudit = runWebFSAudit;
-    window.runPMAudit = runPMAudit;
-    window.runProcAudit = runProcAudit;
-    window.runServerAudit = runServerAudit;
-    window.runFullAudit = runFullAudit;
-</script>
+        // Load previous results if available
+        const lastAudit = localStorage.getItem('atiq-last-audit');
+        if (lastAudit) {
+            try {
+                auditResults = JSON.parse(lastAudit);
+                updateSummary(auditResults);
+                console.log('📊 Loaded previous audit results from localStorage');
+            } catch (e) {
+                console.log('Could not load previous audit results:', e);
+            }
+        }
+
+        // Auto-run full audit
+        setTimeout(async () => {
+            console.log('🚀 Auto-running ATiQ WebContainer Reality Audit...');
+            
+            try {
+                const runner = new ATiQTestRunner();
+                const success = await runner.runFullAudit();
+                
+                if (success) {
+                    console.log('✅ ATiQ WebContainer is PRODUCTION READY');
+                    console.log('📄 Audit artifacts saved to localStorage');
+                } else {
+                    console.log('❌ ATiQ WebContainer needs fixes');
+                }
+                
+            } catch (error) {
+                console.error('❌ Audit failed:', error);
+            }
+        }, 2000);
+
+        // Export for manual access
+        window.runWebFSAudit = runWebFSAudit;
+        window.runPMAudit = runPMAudit;
+        window.runProcAudit = runProcAudit;
+        window.runServerAudit = runServerAudit;
         window.runFullAudit = runFullAudit;
     </script>
 </body>
